@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>Club Manager 2026</title>
 
+<!-- CONTROL DE CACHE -->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -121,6 +126,9 @@ td {
 
 <script>
 
+// VERSION (opcional para control)
+const VERSION = "1.0.0";
+
 //========================
 // FUNCION UTIL
 //========================
@@ -134,7 +142,9 @@ function mostrar(label, valor) {
 //========================
 // CARGAR CLUBES
 //========================
-fetch("clubes.json")
+fetch("clubes.json?v=" + VERSION + "&t=" + Date.now(), {
+    cache: "no-store"
+})
 .then(r => r.json())
 .then(d => {
 
@@ -148,6 +158,10 @@ fetch("clubes.json")
         select.appendChild(opt);
     });
 
+})
+.catch(() => {
+    document.getElementById("resultado").innerHTML =
+        "<div class='error'>Error al cargar la lista de clubes.</div>";
 });
 
 //========================
@@ -165,7 +179,9 @@ function buscar() {
         return;
     }
 
-    fetch(archivo)
+    fetch(archivo + "?v=" + VERSION + "&t=" + Date.now(), {
+        cache: "no-store"
+    })
     .then(r => r.json())
     .then(data => {
 
@@ -188,9 +204,6 @@ function buscar() {
         html += mostrar("Grupo", familia.nombre);
         html += mostrar("Titular", familia.titular);
 
-        //========================
-        // DATOS COMPLETOS
-        //========================
         html += mostrar("Tutor 1", familia.NOMBRE_TUTOR_1);
         html += mostrar("Teléfono", familia.TELEFONO_PRINCIPAL);
         html += mostrar("Tutor 2", familia.NOMBRE_TUTOR_2);
@@ -198,9 +211,6 @@ function buscar() {
         html += mostrar("Email", familia.email);
         html += mostrar("Obs", familia.OBSERVACIONES);
 
-        //========================
-        // TABLA
-        //========================
         html += `<table>
                     <tr>
                         <th>Socio</th>
@@ -227,9 +237,6 @@ function buscar() {
                     Total: $${total.toLocaleString()}
                  </div>`;
 
-        //========================
-        // WHATSAPP
-        //========================
         if (data.club.whatsapp) {
 
             let mensaje = encodeURIComponent(
