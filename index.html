@@ -34,7 +34,18 @@ h1 {
 .form-group {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+}
+
+.input-labels {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.input-labels label {
+    flex: 1;
+    font-weight: bold;
 }
 
 input, select {
@@ -63,10 +74,17 @@ button:hover {
     border-radius: 8px;
     background: #f9fafb;
     border: 1px solid #eee;
+    font-size: 0.9em; /* letra más chica */
 }
 
-.info {
-    margin-bottom: 8px;
+.card-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 6px;
+}
+
+.card-row div {
+    flex: 1;
 }
 
 table {
@@ -114,6 +132,12 @@ td {
 
     <h1 id="titulo">Club Manager 2026</h1>
 
+    <div class="input-labels">
+        <label for="club">Club</label>
+        <label for="email">Email</label>
+        <label for="cod">Cod. Grupo Familiar</label>
+    </div>
+
     <div class="form-group">
         <select id="club"></select>
         <input type="text" id="email" placeholder="Email">
@@ -126,50 +150,33 @@ td {
 </div>
 
 <script>
-
-// VERSION (opcional para control)
 const VERSION = "1.0.0";
 
-//========================
-// FUNCION UTIL
-//========================
 function mostrar(label, valor) {
-    if (valor === undefined || valor === null || String(valor).trim() === "") {
-        return "";
-    }
-    return `<div class="info"><b>${label}:</b> ${valor}</div>`;
+    if (valor === undefined || valor === null || String(valor).trim() === "") return "";
+    return `<div><b>${label}:</b> ${valor}</div>`;
 }
 
-//========================
 // CARGAR CLUBES
-//========================
-fetch("clubes.json?v=" + VERSION + "&t=" + Date.now(), {
-    cache: "no-store"
-})
+fetch("clubes.json?v=" + VERSION + "&t=" + Date.now(), { cache: "no-store" })
 .then(r => r.json())
 .then(d => {
-
     let select = document.getElementById("club");
     select.innerHTML = "<option value=''>Seleccionar club</option>";
-
     d.clubes.forEach(c => {
         let opt = document.createElement("option");
         opt.value = c.archivo;
         opt.textContent = c.nombre;
         select.appendChild(opt);
     });
-
 })
 .catch(() => {
     document.getElementById("resultado").innerHTML =
         "<div class='error'>Error al cargar la lista de clubes.</div>";
 });
 
-//========================
 // BUSCAR
-//========================
 function buscar() {
-
     let archivo = document.getElementById("club").value;
     let email = document.getElementById("email").value.toLowerCase().trim();
     let cod = document.getElementById("cod").value.trim();
@@ -180,9 +187,7 @@ function buscar() {
         return;
     }
 
-    fetch(archivo + "?v=" + VERSION + "&t=" + Date.now(), {
-        cache: "no-store"
-    })
+    fetch(archivo + "?v=" + VERSION + "&t=" + Date.now(), { cache: "no-store" })
     .then(r => r.json())
     .then(data => {
 
@@ -193,7 +198,7 @@ function buscar() {
 
         if (!familia) {
             document.getElementById("resultado").innerHTML =
-                "<div class='error'>No se encontraron datos. Verifique que el club, el email y el código del grupo familiar sean correctos.</div>";
+                "<div class='error'>No se encontraron datos. Verifique club, email y código del grupo familiar.</div>";
             return;
         }
 
@@ -202,23 +207,23 @@ function buscar() {
 
         let html = `<div class="card">`;
 
-        html += mostrar("Grupo", familia.nombre);
-        html += mostrar("Titular", familia.titular);
+        // Línea 1: Grupo y Titular
+        html += `<div class="card-row">${mostrar("Grupo", familia.nombre)}${mostrar("Titular", familia.titular)}</div>`;
+        // Línea 2: Tutor 1 y Teléfono Principal
+        html += `<div class="card-row">${mostrar("Tutor 1", familia.NOMBRE_TUTOR_1)}${mostrar("Teléfono", familia.TELEFONO_PRINCIPAL)}</div>`;
+        // Línea 3: Tutor 2 y Teléfono Secundario
+        html += `<div class="card-row">${mostrar("Tutor 2", familia.NOMBRE_TUTOR_2)}${mostrar("Teléfono Secundario", familia.TELEFONO_SECUNDARIO)}</div>`;
 
-        html += mostrar("Tutor 1", familia.NOMBRE_TUTOR_1);
-        html += mostrar("Teléfono", familia.TELEFONO_PRINCIPAL);
-        html += mostrar("Tutor 2", familia.NOMBRE_TUTOR_2);
-        html += mostrar("Teléfono Secundario", familia.TELEFONO_SECUNDARIO);
-        html += mostrar("Email", familia.email);
-        html += mostrar("Obs", familia.OBSERVACIONES);
+        // Observaciones (si hay)
+        if(familia.OBSERVACIONES) html += `<div class="card-row">${mostrar("Obs", familia.OBSERVACIONES)}</div>`;
 
+        // Tabla de integrantes
         html += `<table>
                     <tr>
                         <th>Socio</th>
                         <th>División</th>
                         <th>Deuda</th>
                     </tr>`;
-
         familia.integrantes.forEach(i => {
             html += `<tr>
                         <td>${i.nombre}</td>
@@ -226,26 +231,21 @@ function buscar() {
                         <td>$${Number(i.deuda).toLocaleString()}</td>
                      </tr>`;
         });
-
         html += `</table>`;
 
         let limite = Number(familia.SALDO_LIMITE || 0);
         let total = Number(familia.deuda_total || 0);
-
         let clase = total > limite ? "alerta" : "ok";
 
-        html += `<div class="total ${clase}">
-                    Total: $${total.toLocaleString()}
-                 </div>`;
+        html += `<div class="total ${clase}">Total: $${total.toLocaleString()}</div>`;
 
+        // WhatsApp
         if (data.club.whatsapp) {
-
             let mensaje = encodeURIComponent(
                 "Hola, soy el tutor del grupo " + familia.cod_familia +
                 " - " + familia.nombre +
                 ". Me comunico para consultar sobre la cuenta corriente."
             );
-
             html += `<a class="btn-wsp" target="_blank"
                         href="https://wa.me/${data.club.whatsapp}?text=${mensaje}">
                         <img src="https://cdn-icons-png.flaticon.com/24/733/733585.png">
@@ -253,7 +253,6 @@ function buscar() {
         }
 
         html += `</div>`;
-
         document.getElementById("resultado").innerHTML = html;
 
     })
@@ -262,7 +261,6 @@ function buscar() {
             "<div class='error'>Error al cargar los datos del club.</div>";
     });
 }
-
 </script>
 
 </body>
