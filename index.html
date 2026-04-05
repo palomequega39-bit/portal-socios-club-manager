@@ -121,7 +121,15 @@ td {
 
 <script>
 
-let clubes = [];
+//========================
+// FUNCION UTIL
+//========================
+function mostrar(label, valor) {
+    if (valor === undefined || valor === null || String(valor).trim() === "") {
+        return "";
+    }
+    return `<div class="info"><b>${label}:</b> ${valor}</div>`;
+}
 
 //========================
 // CARGAR CLUBES
@@ -148,9 +156,12 @@ fetch("clubes.json")
 function buscar() {
 
     let archivo = document.getElementById("club").value;
+    let email = document.getElementById("email").value.toLowerCase().trim();
+    let cod = document.getElementById("cod").value.trim();
 
-    if (!archivo) {
-        alert("Debe seleccionar un club");
+    if (!archivo || !email || !cod) {
+        document.getElementById("resultado").innerHTML =
+            "<div class='error'>Debe completar todos los campos: club, email y código de familia.</div>";
         return;
     }
 
@@ -158,16 +169,14 @@ function buscar() {
     .then(r => r.json())
     .then(data => {
 
-        let email = document.getElementById("email").value.toLowerCase().trim();
-        let cod = document.getElementById("cod").value.trim();
-
         let familia = data.familias.find(f =>
-            f.email === email && String(f.cod_familia) === cod
+            f.email.toLowerCase().trim() === email &&
+            String(f.cod_familia).trim() === cod
         );
 
         if (!familia) {
             document.getElementById("resultado").innerHTML =
-                "<div class='error'>No se encontraron datos.</div>";
+                "<div class='error'>No se encontraron datos. Verifique que el club, el email y el código del grupo familiar sean correctos.</div>";
             return;
         }
 
@@ -176,29 +185,18 @@ function buscar() {
 
         let html = `<div class="card">`;
 
-        html += `<div class="info"><b>Grupo:</b> ${familia.nombre}</div>`;
-        html += `<div class="info"><b>Titular:</b> ${familia.titular}</div>`;
+        html += mostrar("Grupo", familia.nombre);
+        html += mostrar("Titular", familia.titular);
 
         //========================
         // DATOS COMPLETOS
         //========================
-        if (familia.NOMBRE_TUTOR_1)
-            html += `<div class="info"><b>Tutor 1:</b> ${familia.NOMBRE_TUTOR_1}</div>`;
-
-        if (familia.TELEFONO_PRINCIPAL)
-            html += `<div class="info"><b>Teléfono:</b> ${familia.TELEFONO_PRINCIPAL}</div>`;
-
-        if (familia.NOMBRE_TUTOR_2)
-            html += `<div class="info"><b>Tutor 2:</b> ${familia.NOMBRE_TUTOR_2}</div>`;
-
-        if (familia.TELEFONO_SECUNDARIO)
-            html += `<div class="info"><b>Teléfono Secundario:</b> ${familia.TELEFONO_SECUNDARIO}</div>`;
-
-        if (familia.email)
-            html += `<div class="info"><b>Email:</b> ${familia.email}</div>`;
-
-        if (familia.OBSERVACIONES)
-            html += `<div class="info"><b>Obs:</b> ${familia.OBSERVACIONES}</div>`;
+        html += mostrar("Tutor 1", familia.NOMBRE_TUTOR_1);
+        html += mostrar("Teléfono", familia.TELEFONO_PRINCIPAL);
+        html += mostrar("Tutor 2", familia.NOMBRE_TUTOR_2);
+        html += mostrar("Teléfono Secundario", familia.TELEFONO_SECUNDARIO);
+        html += mostrar("Email", familia.email);
+        html += mostrar("Obs", familia.OBSERVACIONES);
 
         //========================
         // TABLA
@@ -230,7 +228,7 @@ function buscar() {
                  </div>`;
 
         //========================
-        // WHATSAPP ICONO
+        // WHATSAPP
         //========================
         if (data.club.whatsapp) {
 
@@ -250,6 +248,10 @@ function buscar() {
 
         document.getElementById("resultado").innerHTML = html;
 
+    })
+    .catch(() => {
+        document.getElementById("resultado").innerHTML =
+            "<div class='error'>Error al cargar los datos del club.</div>";
     });
 }
 
