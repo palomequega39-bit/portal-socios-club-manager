@@ -2,11 +2,13 @@
   "clubes": [
     {
       "id": "club1",
-      "nombre": "Club Valores F.C."
+      "nombre": "Club Valores F.C.",
+      "archivo": "data/club1.json"
     },
     {
       "id": "club2",
-      "nombre": "Esc. de Fútbol San Pablo"
+      "nombre": "Esc. de Fútbol San Pablo",
+      "archivo": "data/club2.json"
     }
   ]
 }
