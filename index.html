@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Club Manager 2026</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+h1 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+}
+
+.form-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input, select {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    background: #2c7be5;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #1a5fd1;
+}
+
+.btn-wsp {
+    background: #25D366;
+    margin-top: 15px;
+    display: inline-block;
+}
+
+.btn-wsp:hover {
+    background: #1ebe5d;
+}
+
+.card {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #eee;
+}
+
+.info {
+    margin-bottom: 10px;
+}
+
+.info b {
+    color: #2c3e50;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th {
+    background: #2c3e50;
+    color: white;
+    padding: 10px;
+    text-align: left;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+    background: #f1f5f9;
+}
+
+.total {
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: right;
+}
+
+.total.ok {
+    color: green;
+}
+
+.total.alerta {
+    color: red;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1 id="titulo">Club Manager 2026</h1>
+
+    <div class="form-group">
+        <select id="club"></select>
+        <input type="text" id="email" placeholder="Email">
+        <input type="text" id="cod" placeholder="Código de Familia">
+        <button onclick="buscar()">Consultar</button>
+    </div>
+
+    <div id="resultado"></div>
+
+</div>
+
+<script>
+
+let clubes = [];
+let datos = {};
+
+//========================
+// CARGAR CLUBES
+//========================
+fetch("clubes.json")
+.then(r => r.json())
+.then(d => {
+    clubes = d.clubes;
+
+    let select = document.getElementById("club");
+
+    select.innerHTML = "<option value=''>Seleccionar club</option>";
+
+    clubes.forEach(c => {
+        let opt = document.createElement("option");
+        opt.value = c.archivo;
+        opt.textContent = c.nombre;
+        select.appendChild(opt);
+    });
+});
+
+//========================
+// BUSCAR
+//========================
+function buscar() {
+
+    let archivo = document.getElementById("club").value;
+
+    if (!archivo) {
+        alert("Debe seleccionar un club");
+        return;
+    }
+
+    fetch(archivo)
+    .then(r => r.json())
+    .then(data => {
+
+        let email = document.getElementById("email").value.toLowerCase().trim();
+        let cod = parseInt(document.getElementById("cod").value);
+
+        let familia = data.familias.find(f =>
+            f.email === email && f.cod_familia === cod
+        );
+
+        if (!familia) {
+            document.getElementById("resultado").innerHTML =
+                "<div class='error'>No se encontraron datos con los valores ingresados.</div>";
+            return;
+        }
+
+        //========================
+        // TITULO DINÁMICO
+        //========================
+        document.getElementById("titulo").innerText =
+            "Club Manager 2026 - " + data.club.nombre;
+
+        let html = `<div class="card">`;
+
+        html += `<div class="info"><b>Grupo Familiar:</b> ${familia.nombre}</div>`;
+        html += `<div class="info"><b>Socio Titular:</b> ${familia.titular}</div>`;
+
+        //========================
+        // DATOS EXTRA FAMILIA
+        //========================
+        if (familia.TELEFONO_PRINCIPAL)
+            html += `<div class="info"><b>Teléfono:</b> ${familia.TELEFONO_PRINCIPAL}</div>`;
+
+        if (familia.EMAIL)
+            html += `<div class="info"><b>Email:</b> ${familia.EMAIL}</div>`;
+
+        //========================
+        // TABLA
+        //========================
+        html += `<table>
+                    <tr>
+                        <th>Socio</th>
+                        <th>División</th>
+                        <th>Deuda</th>
+                    </tr>`;
+
+        familia.integrantes.forEach(i => {
+            html += `<tr>
+                        <td>${i.nombre}</td>
+                        <td>${i.division}</td>
+                        <td>$${i.deuda.toLocaleString()}</td>
+                     </tr>`;
+        });
+
+        html += `</table>`;
+
+        let claseTotal = familia.deuda_total > familia.SALDO_LIMITE ? "alerta" : "ok";
+
+        html += `<div class="total ${claseTotal}">
+                    Total: $${familia.deuda_total.toLocaleString()}
+                 </div>`;
+
+        //========================
+        // BOTÓN WHATSAPP
+        //========================
+        if (data.club.whatsapp) {
+
+            let mensaje = encodeURIComponent(
+                "Hola, consulto por mi cuenta corriente. Familia: " + familia.nombre
+            );
+
+            html += `<a class="btn-wsp" target="_blank"
+                        href="https://wa.me/${data.club.whatsapp}?text=${mensaje}">
+                        Contactar al club por WhatsApp
+                     </a>`;
+        }
+
+        html += `</div>`;
+
+        document.getElementById("resultado").innerHTML = html;
+
+    });
+}
+
+</script>
+
+</body>
+</html>
