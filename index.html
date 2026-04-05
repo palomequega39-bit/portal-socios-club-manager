@@ -37,7 +37,6 @@ input, select {
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ccc;
-    font-size: 14px;
 }
 
 button {
@@ -47,21 +46,10 @@ button {
     color: white;
     border-radius: 6px;
     cursor: pointer;
-    font-weight: bold;
 }
 
 button:hover {
     background: #1a5fd1;
-}
-
-.btn-wsp {
-    background: #25D366;
-    margin-top: 15px;
-    display: inline-block;
-}
-
-.btn-wsp:hover {
-    background: #1ebe5d;
 }
 
 .card {
@@ -76,10 +64,6 @@ button:hover {
     margin-bottom: 10px;
 }
 
-.info b {
-    color: #2c3e50;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -90,7 +74,6 @@ th {
     background: #2c3e50;
     color: white;
     padding: 10px;
-    text-align: left;
 }
 
 td {
@@ -98,29 +81,28 @@ td {
     border-bottom: 1px solid #eee;
 }
 
-tr:hover {
-    background: #f1f5f9;
-}
-
 .total {
     margin-top: 20px;
-    font-size: 18px;
     font-weight: bold;
     text-align: right;
 }
 
-.total.ok {
-    color: green;
-}
-
-.total.alerta {
-    color: red;
-}
+.total.ok { color: green; }
+.total.alerta { color: red; }
 
 .error {
     color: red;
-    font-weight: bold;
     margin-top: 15px;
+}
+
+.btn-wsp {
+    display: inline-block;
+    margin-top: 15px;
+    background: #25D366;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    text-decoration: none;
 }
 </style>
 </head>
@@ -145,7 +127,6 @@ tr:hover {
 <script>
 
 let clubes = [];
-let datos = {};
 
 //========================
 // CARGAR CLUBES
@@ -153,10 +134,10 @@ let datos = {};
 fetch("clubes.json")
 .then(r => r.json())
 .then(d => {
+
     clubes = d.clubes;
 
     let select = document.getElementById("club");
-
     select.innerHTML = "<option value=''>Seleccionar club</option>";
 
     clubes.forEach(c => {
@@ -165,6 +146,10 @@ fetch("clubes.json")
         opt.textContent = c.nombre;
         select.appendChild(opt);
     });
+
+})
+.catch(err => {
+    console.error("Error cargando clubes:", err);
 });
 
 //========================
@@ -179,9 +164,16 @@ function buscar() {
         return;
     }
 
+    console.log("Intentando cargar:", archivo);
+
     fetch(archivo)
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error("No se pudo cargar el JSON");
+        return r.json();
+    })
     .then(data => {
+
+        console.log("JSON cargado correctamente", data);
 
         let email = document.getElementById("email").value.toLowerCase().trim();
         let cod = parseInt(document.getElementById("cod").value);
@@ -192,33 +184,21 @@ function buscar() {
 
         if (!familia) {
             document.getElementById("resultado").innerHTML =
-                "<div class='error'>No se encontraron datos con los valores ingresados.</div>";
+                "<div class='error'>No se encontraron datos.</div>";
             return;
         }
 
-        //========================
-        // TITULO DINÁMICO
-        //========================
         document.getElementById("titulo").innerText =
             "Club Manager 2026 - " + data.club.nombre;
 
         let html = `<div class="card">`;
 
-        html += `<div class="info"><b>Grupo Familiar:</b> ${familia.nombre}</div>`;
-        html += `<div class="info"><b>Socio Titular:</b> ${familia.titular}</div>`;
+        html += `<div class="info"><b>Grupo:</b> ${familia.nombre}</div>`;
+        html += `<div class="info"><b>Titular:</b> ${familia.titular}</div>`;
 
-        //========================
-        // DATOS EXTRA FAMILIA
-        //========================
         if (familia.TELEFONO_PRINCIPAL)
             html += `<div class="info"><b>Teléfono:</b> ${familia.TELEFONO_PRINCIPAL}</div>`;
 
-        if (familia.EMAIL)
-            html += `<div class="info"><b>Email:</b> ${familia.EMAIL}</div>`;
-
-        //========================
-        // TABLA
-        //========================
         html += `<table>
                     <tr>
                         <th>Socio</th>
@@ -230,21 +210,21 @@ function buscar() {
             html += `<tr>
                         <td>${i.nombre}</td>
                         <td>${i.division}</td>
-                        <td>$${i.deuda.toLocaleString()}</td>
+                        <td>$${Number(i.deuda).toLocaleString()}</td>
                      </tr>`;
         });
 
         html += `</table>`;
 
-        let claseTotal = familia.deuda_total > familia.SALDO_LIMITE ? "alerta" : "ok";
+        let limite = Number(familia.SALDO_LIMITE || 0);
+        let total = Number(familia.deuda_total || 0);
 
-        html += `<div class="total ${claseTotal}">
-                    Total: $${familia.deuda_total.toLocaleString()}
+        let clase = total > limite ? "alerta" : "ok";
+
+        html += `<div class="total ${clase}">
+                    Total: $${total.toLocaleString()}
                  </div>`;
 
-        //========================
-        // BOTÓN WHATSAPP
-        //========================
         if (data.club.whatsapp) {
 
             let mensaje = encodeURIComponent(
@@ -253,7 +233,7 @@ function buscar() {
 
             html += `<a class="btn-wsp" target="_blank"
                         href="https://wa.me/${data.club.whatsapp}?text=${mensaje}">
-                        Contactar al club por WhatsApp
+                        WhatsApp del Club
                      </a>`;
         }
 
@@ -261,6 +241,11 @@ function buscar() {
 
         document.getElementById("resultado").innerHTML = html;
 
+    })
+    .catch(err => {
+        console.error("ERROR FETCH:", err);
+        document.getElementById("resultado").innerHTML =
+            "<div class='error'>Error al cargar datos. Revisar consola (F12).</div>";
     });
 }
 
