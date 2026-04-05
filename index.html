@@ -98,11 +98,6 @@ td {
 .btn-wsp {
     display: inline-block;
     margin-top: 15px;
-    background: #25D366;
-    color: white;
-    padding: 10px;
-    border-radius: 6px;
-    text-decoration: none;
 }
 </style>
 </head>
@@ -164,16 +159,12 @@ function buscar() {
         return;
     }
 
-    console.log("Intentando cargar:", archivo);
-
     fetch(archivo)
     .then(r => {
         if (!r.ok) throw new Error("No se pudo cargar el JSON");
         return r.json();
     })
     .then(data => {
-
-        console.log("JSON cargado correctamente", data);
 
         let email = document.getElementById("email").value.toLowerCase().trim();
         let cod = parseInt(document.getElementById("cod").value);
@@ -225,15 +216,22 @@ function buscar() {
                     Total: $${total.toLocaleString()}
                  </div>`;
 
+        //========================
+        // BOTÓN WHATSAPP CON ICONO WEB
+        //========================
         if (data.club.whatsapp) {
 
             let mensaje = encodeURIComponent(
-                "Hola, consulto por mi cuenta corriente. Familia: " + familia.nombre
+                "Hola, soy el tutor del grupo " + familia.cod_familia +
+                " - " + familia.nombre +
+                ". Me comunico para consultarles sobre mi cuenta corriente."
             );
 
             html += `<a class="btn-wsp" target="_blank"
                         href="https://wa.me/${data.club.whatsapp}?text=${mensaje}">
-                        WhatsApp del Club
+                        <img src="https://cdn-icons-png.flaticon.com/24/733/733585.png"
+                             alt="WhatsApp"
+                             style="width:35px; cursor:pointer;">
                      </a>`;
         }
 
