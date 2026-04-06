@@ -44,8 +44,16 @@ h1 {
 }
 
 .input-labels label {
-    flex: 1;
+    display: block;
+    font-size: 0.8em; /* letra más chica */
     font-weight: bold;
+    text-align: left; /* alineado a la izquierda */
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 input, select {
@@ -53,6 +61,7 @@ input, select {
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ccc;
+    font-size: 0.9em;
 }
 
 button {
@@ -132,16 +141,19 @@ td {
 
     <h1 id="titulo">Club Manager 2026</h1>
 
-    <div class="input-labels">
-        <label for="club">Club</label>
-        <label for="email">Email</label>
-        <label for="cod">Cod. Grupo Familiar</label>
-    </div>
-
     <div class="form-group">
-        <select id="club"></select>
-        <input type="text" id="email" placeholder="Email">
-        <input type="text" id="cod" placeholder="Código de Familia">
+        <div class="input-wrapper">
+            <label for="club">Club</label>
+            <select id="club"></select>
+        </div>
+        <div class="input-wrapper">
+            <label for="email">Email</label>
+            <input type="text" id="email" placeholder="Email">
+        </div>
+        <div class="input-wrapper">
+            <label for="cod">Cod. Grupo Familiar</label>
+            <input type="text" id="cod" placeholder="Código de Familia">
+        </div>
         <button onclick="buscar()">Consultar</button>
     </div>
 
